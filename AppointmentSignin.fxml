@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ListView?>
+<?import javafx.scene.layout.BorderPane?>
+
+<BorderPane fx:id="rootNode" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.ajilesolutions.appointmenttracker.Appointment_Tracker.AppointmentSignin">
+   <center>
+      <ListView fx:id="appointments" prefHeight="214.0" prefWidth="600.0" BorderPane.alignment="CENTER" />
+   </center>
+   <bottom>
+      <Button fx:id="signIn" mnemonicParsing="false" onAction="#signIntoAppointment" text="Sign In" BorderPane.alignment="CENTER" />
+   </bottom>
+</BorderPane>

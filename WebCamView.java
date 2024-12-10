@@ -12,13 +12,11 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.Region;
 
 public class WebCamView {
-
-	private final ImageView imageView ;
-	private final WebCamService service ;
-	private final Region view ;
+	private final ImageView imageView;
+	private final WebCamService service;
+	private final Region view;
 	
-	private final Label statusPlaceholder ;
-	
+	private final Label statusPlaceholder;
 	
 	public WebCamView(WebCamService service) {
 		this.service = service ;

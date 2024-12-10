@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ChoiceBox?>
+<?import javafx.scene.control.DatePicker?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.text.Font?>
+
+<Pane fx:id="rootNode" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="400.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1">
+   <children>
+      <Label layoutX="106.0" layoutY="31.0" text="Edit Appointment">
+         <font>
+            <Font size="24.0" />
+         </font>
+      </Label>
+      <Label layoutX="79.0" layoutY="107.0" text="Patient:" />
+      <Label layoutX="79.0" layoutY="141.0" text="Specialist:" />
+      <Label layoutX="79.0" layoutY="179.0" text="Date:" />
+      <Label layoutX="78.0" layoutY="214.0" text="Time:" />
+      <ChoiceBox fx:id="patient" disable="true" layoutX="146.0" layoutY="103.0" prefWidth="150.0" />
+      <ChoiceBox fx:id="specialist" disable="true" layoutX="146.0" layoutY="137.0" prefWidth="150.0" />
+      <DatePicker fx:id="date" layoutX="146.0" layoutY="175.0" />
+      <ChoiceBox fx:id="time" layoutX="146.0" layoutY="210.0" prefWidth="150.0" />
+      <Button fx:id="confirm" layoutX="77.0" layoutY="264.0" mnemonicParsing="false" text="Confirm" />
+   </children>
+</Pane>

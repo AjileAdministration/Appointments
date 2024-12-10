@@ -1,4 +1,4 @@
-package com.ajilesolutions.appointmenttracker.Appointment_Tracker;
+package com.ajilesolutions.appointmenttracker.Appointment_Tracker;	
 
 import java.util.Properties;
 import java.awt.image.BufferedImage;
@@ -15,17 +15,21 @@ import javax.mail.internet.AddressException;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 
+import com.twilio.type.PhoneNumber;
+import com.twilio.Twilio;
+
 /**
  *
  * @author ajlso
  */
-
-
     
 public class Specialist {
-	private static String USER_NAME = "podfan12345";  // GMail user name (just the part before "@gmail.com")
-    private static String PASSWORD = "ugmnkdbgwwvnchsp "; // GMail password
-	
+	private static final String USER_NAME = "podfan12345";  // GMail user name (just the part before "@gmail.com")
+    private static final String PASSWORD = "ugmnkdbgwwvnchsp "; // GMail password
+    
+    public static final String ACCOUNT_SID = "MGb8d81efe74878e9fb126140eb35b92e3";
+    public static final String AUTH_TOKEN = "48cc1a9467562cfc0ddaae97da8cea93";
+    
     public enum ContactPref {
     	PHONE,EMAIL,NEITHER
     }
@@ -58,10 +62,6 @@ public class Specialist {
     	return this.id;
     }
     
-    public void setEmailAddr(String emailAddr) {
-    	this.emailAddr = emailAddr;
-    }
-    
     public String getEmailAddr() {
     	return emailAddr;
     }
@@ -74,7 +74,15 @@ public class Specialist {
         return (firstName + " " + lastName);
     }
     
-    public void notifySpecialist() {
+    public void setEmailAddr(String emailAddr) {
+    	this.emailAddr = emailAddr;
+    }
+    
+    public void setPhoneNo(String phoneNo) {
+    	this.phoneNo = phoneNo;
+    }
+    
+    public void notifySpecialist(Patient patient) {
     	if(this.preference == ContactPref.EMAIL){
     		String subject = "Your patient has checked in";
     		String body = this.firstName + " has checked in for their appointment";
@@ -83,8 +91,14 @@ public class Specialist {
     	}
     	
     	if(this.preference == ContactPref.PHONE) {
-    		String subject = "Your patient has checked in";
-    		String body = this.firstName + " has checked in for their appointment";
+    		com.twilio.rest.api.v2010.account.Message message = com.twilio.rest.api.v2010.account.Message.
+        		creator(new PhoneNumber(this.phoneNo),
+            		new PhoneNumber("+18554482160"),
+    				patient.firstName + " " + patient.lastName + 
+    				" has signed into their appointment.")
+				.create();
+            
+            System.out.println(message.getBody());
     	}
     }
     

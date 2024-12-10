@@ -17,24 +17,23 @@ import javax.mail.internet.MimeMessage;
  * @author ajlso
  */
 public class Appointment {
-	private static String USER_NAME = "podfan12345";  // GMail user name (just the part before "@gmail.com")
-    private static String PASSWORD = "ugmnkdbgwwvnchsp "; // GMail password
-	
     public Patient apptPatient;
     public Specialist apptSpecialist;
     public LocalDateTime createTime;
     public LocalDateTime apptTime;
     public float cost;
     public boolean cancelled;
+    public boolean signedIn;
     
     public Appointment(Patient p, Specialist s, LocalDateTime cTime, 
-            LocalDateTime t, float c, boolean cancelled){
+            LocalDateTime t, float cost, boolean cancelled){
         this.apptPatient = p;
         this.apptSpecialist = s;
         this.createTime = cTime;
         this.apptTime = t;
-        this.cost = c;
+        this.cost = cost;
         this.cancelled = cancelled;
+        this.signedIn = false;
     }
     
     @Override
@@ -42,10 +41,10 @@ public class Appointment {
         StringBuilder apptStr = new StringBuilder();
         DateTimeFormatter dtf;
         
-        apptStr.append(apptPatient.firstName + " " + apptPatient.lastName);
-        apptStr.append(" is meeting with ");
-        apptStr.append(apptSpecialist.firstName + " " + 
-                apptSpecialist.lastName);
+        apptStr.append(apptSpecialist.firstName + " " + apptSpecialist.lastName);
+        apptStr.append(" is meeting with patient ");
+        apptStr.append(apptPatient.firstName + " " + 
+                apptPatient.lastName);
         
         dtf =  DateTimeFormatter.ofPattern("MM-dd-yyyy");
         apptStr.append(" on " + apptTime.format(dtf));
@@ -57,6 +56,6 @@ public class Appointment {
     }
     
     public void notifySpecialist() {
-    	this.apptSpecialist.notifySpecialist();
+    	this.apptSpecialist.notifySpecialist(apptPatient);
     }
 }

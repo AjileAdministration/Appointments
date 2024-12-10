@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Menu?>
+<?import javafx.scene.control.MenuBar?>
+<?import javafx.scene.control.MenuItem?>
+
+<MenuBar xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.ajilesolutions.appointmenttracker.Appointment_Tracker.MainMenuBar">
+  <menus>
+    <Menu mnemonicParsing="false" text="Appointments">
+      <items>
+        <MenuItem fx:id="appointmentSignin" mnemonicParsing="false" onAction="#loadAppointmentSignin" text="Appointment Signin" />
+            <MenuItem fx:id="allAppointments" mnemonicParsing="false" onAction="#loadAllAppointments" text="All Appointments" />
+            <MenuItem fx:id="newAppointment" mnemonicParsing="false" onAction="#loadNewAppointment" text="New Appointment" />
+      </items>
+    </Menu>
+    <Menu mnemonicParsing="false" text="Patients">
+      <items>
+        <MenuItem fx:id="newPatient" mnemonicParsing="false" onAction="#loadNewPatient" text="New Patient" />
+            <MenuItem fx:id="editPatient" mnemonicParsing="false" onAction="#loadEditPatient" text="Edit Patient" />
+      </items>
+    </Menu>
+    <Menu mnemonicParsing="false" text="Specialists">
+      <items>
+        <MenuItem fx:id="newSpecialist" mnemonicParsing="false" onAction="#loadNewSpecialist" text="New Specialist" />
+            <MenuItem fx:id="editSpecialist" mnemonicParsing="false" onAction="#loadEditSpecialist" text="Edit Specialist" />
+      </items>
+    </Menu>
+  </menus>
+</MenuBar>

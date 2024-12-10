@@ -1,10 +1,13 @@
 package com.ajilesolutions.appointmenttracker.Appointment_Tracker;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.time.LocalDateTime;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import javax.mail.*;
+
+import com.ajilesolutions.appointmenttracker.Appointment_Tracker.Specialist.ContactPref;
 
 import java.io.File;
 import java.io.IOException;
@@ -24,6 +27,8 @@ import java.util.Properties;
  * @author ajlso
  */
 public class Schedule {
+	private static Schedule instance;
+	
 	private static final String CONNECTION_STRING = 
 			"jdbc:aws-wrapper:mysql://clinic-database.chqks0mo8cue.us-east-1.rds.amazonaws.com:3306/clinic";
 	private static final String USERNAME = "admin";
@@ -38,10 +43,18 @@ public class Schedule {
     
     public String clinicName;
     
-    public Schedule(){
+    private Schedule(){
     	patients = loadPatients();
     	specialists = loadSpecialists();
     	appointments = loadAppointments();
+    }
+    
+    public static Schedule getInstance() {
+    	if(instance == null) {
+    		instance = new Schedule();
+    	}
+    	
+    	return instance;
     }
     
     public void addAppt(Appointment newAppt)
@@ -51,14 +64,19 @@ public class Schedule {
         addAppointmentDB(newAppt);
     }
     
-    public Patient addPatient(String first, String last, String email, String phone, LocalDate create){
-    	//record date of patient's first visit
-    	LocalDate creation = LocalDate.now();
+    public void deleteAppt(Appointment appt) {
+    	appointments.remove(appt);
+    	
+    	deleteAppointmentDB(appt);
+    }
+    
+    public Patient addPatient(String first, String last, String email, String phone){
+    	LocalDate createDate = LocalDate.now();
     	
     	//increment numPatients and use it to set new patient's ID
     	numPatients++;
     	
-        Patient newPatient = new Patient(numPatients,first,last,email,phone,creation);
+        Patient newPatient = new Patient(numPatients,first,last,email,phone,createDate);
         
         try {
 	        File profPic = new File(newPatient.profPicImageName);
@@ -75,7 +93,23 @@ public class Schedule {
         return newPatient;
     }
     
-    public Specialist addSpecialist(String first, String last, Specialist.ContactPref contPref, String phone, String email, String bio){
+    public void updatePatient(Patient patient, String newFirstName,String newLastName,String newEmail,String newPhoneNo) {
+    	patient.firstName = newFirstName;
+    	patient.lastName = newLastName;
+    	patient.email = newEmail;
+    	patient.phoneNo = newPhoneNo;
+    	
+    	updatePatientDB(patient);
+    }
+    
+    public void removePatient(Patient p) {
+    	patients.remove(p);
+    	
+    	deletePatientDB(p);
+    }
+    
+    public Specialist addSpecialist(String first, String last, 
+    		Specialist.ContactPref contPref, String phone, String email, String bio){
     	//record date of specialist's creation
     	LocalDate creation = LocalDate.now();
     	
@@ -97,6 +131,26 @@ public class Schedule {
         addSpecialistDB(newSpecialist);
         
         return newSpecialist;
+    }
+    
+    public void updateSpecialist(Specialist specialist,String newFirstName,
+    		String newLastName,ContactPref newContactPref,String newEmail,String newPhoneNo,
+    		String newBio) {
+    	specialist.firstName = newFirstName;
+    	specialist.lastName = newLastName;
+    	specialist.preference = newContactPref;
+    	specialist.setEmailAddr(newEmail);
+    	specialist.setPhoneNo(newPhoneNo);
+    	specialist.bio = newBio;
+    	
+    	
+    	updateSpecialistDB(specialist);
+    }
+    
+    public void removeSpecialist(Specialist specialist) {
+    	specialists.remove(specialist);
+    	
+    	deleteSpecialistDB(specialist);
     }
     
     private ArrayList<Patient> loadPatients() {
@@ -256,7 +310,7 @@ public class Schedule {
     	return loadedList;
     }
     
-    private void addAppointmentDB(Appointment apt) {
+    private void addAppointmentDB(Appointment appt) {
     	final Properties properties = new Properties();
     	
     	// Configuring connection properties for the underlying JDBC driver.
@@ -275,11 +329,42 @@ public class Schedule {
         	//convert appt time to mysql DateTime format
         	DateTimeFormatter dtf = DateTimeFormatter.ofPattern("YYYY-MM-dd HH:mm:ss");
         	final String UPDATE = 
-        			"INSERT INTO appointment VALUES (" + apt.apptPatient.getID() + "," +
-        			apt.apptSpecialist.getID() + ",\"" + apt.createTime.format(dtf) + "\",\"" +
-        			apt.apptTime.format(dtf) + "\"," + apt.cost + "," + apt.cancelled + ");";
+        			"INSERT INTO appointment VALUES (" + appt.apptPatient.getID() + "," +
+        			appt.apptSpecialist.getID() + ",\"" + appt.createTime.format(dtf) + "\",\"" +
+        			appt.apptTime.format(dtf) + "\"," + appt.cost + "," + appt.cancelled + ");";
         	
             stmt.executeUpdate(UPDATE);
+            
+            conn.close();
+        }
+        catch(SQLException e) {
+        	System.out.println(e.getMessage());
+        }
+    }
+    
+    private void deleteAppointmentDB(Appointment appt) {
+    	final Properties properties = new Properties();
+    	
+    	// Configuring connection properties for the underlying JDBC driver.
+        properties.setProperty("user", USERNAME);
+        properties.setProperty("password", PASSWORD);
+        properties.setProperty("loginTimeout", "100");
+        
+        // Configuring connection properties for the JDBC Wrapper.
+        properties.setProperty("wrapperPlugins", "failover,efm2");
+        properties.setProperty("wrapperLogUnclosedConnections", "true");
+        
+        try {
+        	DateTimeFormatter mySQLDateTimeFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        	
+        	Connection conn = DriverManager.getConnection(CONNECTION_STRING, properties);
+        	
+        	Statement stmt = conn.createStatement();
+        	final String DELETE = 
+        			"DELETE FROM appointment WHERE specialist_id = " + appt.apptSpecialist.getID()
+        			+ " AND appt_time = \"" + appt.apptTime.format(mySQLDateTimeFormat) + "\";";
+        	
+        	stmt.executeUpdate(DELETE);
             
             conn.close();
         }
@@ -318,6 +403,62 @@ public class Schedule {
         }
     }
     
+    private void updatePatientDB(Patient patient) {
+    	final Properties properties = new Properties();
+    	
+    	// Configuring connection properties for the underlying JDBC driver.
+        properties.setProperty("user", USERNAME);
+        properties.setProperty("password", PASSWORD);
+        properties.setProperty("loginTimeout", "100");
+        
+        // Configuring connection properties for the JDBC Wrapper.
+        properties.setProperty("wrapperPlugins", "failover,efm2");
+        properties.setProperty("wrapperLogUnclosedConnections", "true");
+        
+        try {
+	    	Connection conn = DriverManager.getConnection(CONNECTION_STRING, properties);
+	    	
+	    	Statement stmt = conn.createStatement();
+	    	final String UPDATE = "UPDATE patient SET first_name = \"" + patient.firstName + "\",last_name = \"" + 
+	    	patient.lastName + "\",email = \"" + patient.email + "\",phone_num = \"" + patient.phoneNo + 
+	    	"\" WHERE patient_id = " + patient.getID() + ";";
+	    	
+	    	stmt.executeUpdate(UPDATE);
+	    	
+	    	conn.close();
+	    }
+	    catch(SQLException e) {
+	    	System.out.println(e.getMessage());
+	    }
+    }
+    
+    private void deletePatientDB(Patient patient) {
+    	final Properties properties = new Properties();
+    	
+    	// Configuring connection properties for the underlying JDBC driver.
+        properties.setProperty("user", USERNAME);
+        properties.setProperty("password", PASSWORD);
+        properties.setProperty("loginTimeout", "100");
+        
+        // Configuring connection properties for the JDBC Wrapper.
+        properties.setProperty("wrapperPlugins", "failover,efm2");
+        properties.setProperty("wrapperLogUnclosedConnections", "true");
+        
+        try {
+        	Connection conn = DriverManager.getConnection(CONNECTION_STRING, properties);
+        	
+        	Statement stmt = conn.createStatement();
+        	final String UPDATE = 
+        			"DELETE FROM patient WHERE patient_id = " + patient.getID() + ";";
+            stmt.executeUpdate(UPDATE);
+            
+            conn.close();
+        }
+        catch(SQLException e) {
+        	System.out.println(e.getMessage());
+        }
+    }
+    
     private void addSpecialistDB(Specialist s) {
     	final Properties properties = new Properties();
     	
@@ -335,10 +476,11 @@ public class Schedule {
         	
         	Statement stmt = conn.createStatement();
         	final String UPDATE = 
-        			"INSERT INTO patient VALUES (" + s.getID() + ",\"" +
+        			"INSERT INTO specialist VALUES (" + s.getID() + ",\"" +
         			s.profPicImageName + "\",\"" + s.firstName + "\",\"" +
-        			s.lastName + "\"," + s.preference + ",\"" + s.getEmailAddr() + "\",\"" +
+        			s.lastName + "\"," + s.preference.ordinal() + ",\"" + s.getEmailAddr() + "\",\"" +
         			s.getPhoneNo() + "\",\"" + s.bio + "\",\"" + s.createDate.toString() + "\");";
+        	
             stmt.executeUpdate(UPDATE);
             
             conn.close();
@@ -346,6 +488,94 @@ public class Schedule {
         catch(SQLException e) {
         	System.out.println(e.getMessage());
         }
+    }
+    
+    private void updateSpecialistDB(Specialist specialist) {
+    	final Properties properties = new Properties();
+    	// Configuring connection properties for the underlying JDBC driver.
+        properties.setProperty("user", USERNAME);
+        properties.setProperty("password", PASSWORD);
+        properties.setProperty("loginTimeout", "100");
+        // Configuring connection properties for the JDBC Wrapper.
+        properties.setProperty("wrapperPlugins", "failover,efm2");
+        properties.setProperty("wrapperLogUnclosedConnections", "true");
         
+        try {
+        	Connection conn = DriverManager.getConnection(CONNECTION_STRING, properties);
+        	System.out.println(specialist.preference.ordinal());
+        	Statement stmt = conn.createStatement();
+        	final String UPDATE = "UPDATE specialist SET first_name = \"" + specialist.firstName + 
+        			"\",last_name = \"" + specialist.lastName + "\",contact_pref = " + 
+        			specialist.preference.ordinal() + ",email = \"" + specialist.getEmailAddr() + 
+        			"\",phone_num = \"" + specialist.getPhoneNo() + "\",bio = \"" + specialist.bio +
+        			"\" WHERE specialist_id = " +specialist.getID() + ";";
+        	
+            stmt.executeUpdate(UPDATE);
+            
+            conn.close();
+        }
+        catch(SQLException e) {
+        	System.out.println(e.getMessage());
+        }
+    }
+    
+    private void deleteSpecialistDB(Specialist specialist) {
+    	final Properties properties = new Properties();
+    	
+    	// Configuring connection properties for the underlying JDBC driver.
+        properties.setProperty("user", USERNAME);
+        properties.setProperty("password", PASSWORD);
+        properties.setProperty("loginTimeout", "100");
+        
+        // Configuring connection properties for the JDBC Wrapper.
+        properties.setProperty("wrapperPlugins", "failover,efm2");
+        properties.setProperty("wrapperLogUnclosedConnections", "true");
+        
+        try {
+        	Connection conn = DriverManager.getConnection(CONNECTION_STRING, properties);
+        	
+        	Statement stmt = conn.createStatement();
+        	final String UPDATE = 
+        			"DELETE FROM specialist WHERE specialist_id = " + specialist.getID() + ";";
+            stmt.executeUpdate(UPDATE);
+            
+            conn.close();
+        }
+        catch(SQLException e) {
+        	System.out.println(e.getMessage());
+        }
+    }
+    
+    public boolean hasSpecialistConflict(Appointment newAppointment) {
+    	Iterator<Appointment> i = appointments.iterator();
+    	while(i.hasNext()) {
+    		Appointment currAppointment = i.next();
+    		//check if time and specialist are the same
+    		if((currAppointment.apptTime.equals(newAppointment.apptTime)) && 
+    		(currAppointment.apptSpecialist == newAppointment.apptSpecialist)) {
+    			return true;
+    		}
+    	}
+    	
+    	return false;
+    }
+    
+    public boolean hasPatientConflict(Appointment newAppointment) {
+    	Iterator<Appointment> i = appointments.iterator();
+    	while(i.hasNext()) {
+    		Appointment curr = i.next();
+    		//check if time and specialist are the same
+    		if((curr.apptTime.equals(newAppointment.apptTime)) && 
+    		(curr.apptPatient == newAppointment.apptPatient)) {
+    			return true;
+    		}
+    	}
+    	
+    	return false;
+    }
+    
+    public void signInToAppointment(Appointment appt) {
+    	appt.apptSpecialist.notifySpecialist(appt.apptPatient);
+    	appt.signedIn = true;
     }
 }
